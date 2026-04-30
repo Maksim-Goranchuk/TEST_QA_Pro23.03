@@ -1,0 +1,14 @@
+{
+  "name": "outline-to-gdocs",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "start": "node outline-to-gdocs.js"
+  },
+  "dependencies": {
+    "googleapis": "^121.0.0"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

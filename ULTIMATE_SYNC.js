@@ -17,6 +17,8 @@ function syncSlowAndSteady() {
         const res = UrlFetchApp.fetch(API_URL + 'documents.info', {
           method: 'post', headers: headers, payload: JSON.stringify({id: id}), muteHttpExceptions: true
         });
+        console.log(res.getContent)
+        return true
 
         if (res.getResponseCode() === 200) {
           const p = JSON.parse(res.getContentText()).data;
