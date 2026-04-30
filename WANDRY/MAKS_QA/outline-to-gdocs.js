@@ -11,6 +11,7 @@ const OUTLINE_TOKEN = process.env.OUTLINE_TOKEN || 'ol_api_KkZN5akcMlbJS3tAGMg0t
 const DRIVE_FOLDER_ID = process.env.DRIVE_FOLDER_ID || '1_8SBbYKSsAK4eE2h4mtmgys9M27m_3jz';
 const OUTLINE_PARENT_ID = process.env.OUTLINE_PARENT_ID || '';
 const OUTLINE_IDS = (process.env.OUTLINE_IDS || '').split(',').map(v => v.trim()).filter(Boolean);
+const DRIVE_SUPPORTS_ALL_DRIVES = process.env.DRIVE_SUPPORTS_ALL_DRIVES !== 'false';
 
 const API_URL = process.env.OUTLINE_API_URL || 'https://outline.wandry.com.ua/api/';
 const SCOPES = ['https://www.googleapis.com/auth/drive', 'https://www.googleapis.com/auth/documents'];
@@ -111,16 +112,23 @@ function escapeQueryValue(value) {
   return value.replace(/'/g, "\\'");
 }
 
+function driveRequestOptions() {
+  return DRIVE_SUPPORTS_ALL_DRIVES ? {
+    supportsAllDrives: true,
+    includeItemsFromAllDrives: true
+  } : {};
+}
+
 async function findExistingDoc(drive, title) {
   const query = `name = '${escapeQueryValue(title)}' and mimeType = 'application/vnd.google-apps.document' and trashed = false and '${DRIVE_FOLDER_ID}' in parents`;
-  const res = await drive.files.list({ q: query, fields: 'files(id,name)', spaces: 'drive' });
+  const res = await drive.files.list({ q: query, fields: 'files(id,name)', spaces: 'drive', ...driveRequestOptions() });
   return res.data.files || [];
 }
 
 async function createGoogleDoc(drive, title) {
   console.log('Checking folder access for ID:', DRIVE_FOLDER_ID);
   try {
-    const folderCheck = await drive.files.get({ fileId: DRIVE_FOLDER_ID, fields: 'id,name' });
+    const folderCheck = await drive.files.get({ fileId: DRIVE_FOLDER_ID, fields: 'id,name', ...driveRequestOptions() });
     console.log('Folder found:', folderCheck.data.name);
   } catch (error) {
     console.error('Folder access error:', error.message);
@@ -133,7 +141,8 @@ async function createGoogleDoc(drive, title) {
       mimeType: 'application/vnd.google-apps.document',
       parents: [DRIVE_FOLDER_ID]
     },
-    fields: 'id,name'
+    fields: 'id,name',
+    ...driveRequestOptions()
   });
   return res.data;
 }
@@ -197,6 +206,7 @@ async function main() {
       await sleep(2500);
     } catch (error) {
       console.error(`Failed for ${id}:`, error.message || error);
+      console.log(  'Continuing with next document...');    
     }
   }
 
